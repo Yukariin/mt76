@@ -210,6 +210,7 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 		/* efuse info isn't enough */
 		if (free_block_num >= 59) {
 			use_default = true;
+			dev_warn(dev->mt76.dev, "efuse info isn't enough, use_default: %d\n", use_default);
 			goto out;
 		}
 
@@ -217,6 +218,7 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 		if (mt7996_mcu_get_eeprom(dev, 0, NULL, 0) ||
 		    mt7996_check_eeprom(dev)) {
 			use_default = true;
+			dev_warn(dev->mt76.dev, "check if eeprom data from fw is valid, use_default: %d\n", use_default);
 			goto out;
 		}
 
@@ -230,13 +232,14 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 						    NULL, len);
 			if (ret && ret != -EINVAL) {
 				use_default = true;
+				dev_warn(dev->mt76.dev, "read eeprom data from fw, use_default: %d\n", use_default);
 				goto out;
 			}
 		}
 	}
 
 out:
-	dev_warn(dev->mt76.dev, "mt7996_eeprom_load out\n");
+	dev_warn(dev->mt76.dev, "mt7996_eeprom_load out, use_default: %d\n", use_default);
 	return mt7996_eeprom_check_or_use_default(dev, use_default);
 }
 
