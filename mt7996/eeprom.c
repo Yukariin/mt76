@@ -24,47 +24,32 @@ static int mt7996_check_eeprom(struct mt7996_dev *dev)
 
 static char *mt7996_eeprom_name(struct mt7996_dev *dev)
 {
-	dev_warn(dev->mt76.dev, "mt76_chip 0x%04X\n", mt76_chip(&dev->mt76));
 	switch (mt76_chip(&dev->mt76)) {
 	case 0x7992:
 		switch (dev->var.type) {
 		case MT7992_VAR_TYPE_23:
-			if (dev->var.fem == MT7996_FEM_INT) {
-				dev_warn(dev->mt76.dev, "eeprom 0x7992 MT7992_EEPROM_DEFAULT_23_INT\n");
+			if (dev->var.fem == MT7996_FEM_INT)
 				return MT7992_EEPROM_DEFAULT_23_INT;
-			}
-			dev_warn(dev->mt76.dev, "eeprom 0x7992 MT7992_EEPROM_DEFAULT_23\n");
 			return MT7992_EEPROM_DEFAULT_23;
 		case MT7992_VAR_TYPE_44:
 		default:
-			if (dev->var.fem == MT7996_FEM_INT) {
-				dev_warn(dev->mt76.dev, "eeprom 0x7992 MT7992_EEPROM_DEFAULT_INT\n");
+			if (dev->var.fem == MT7996_FEM_INT)
 				return MT7992_EEPROM_DEFAULT_INT;
-			}
-			if (dev->var.fem == MT7996_FEM_MIX) {
-				dev_warn(dev->mt76.dev, "eeprom 0x7992 MT7992_EEPROM_DEFAULT_MIX\n");
+			if (dev->var.fem == MT7996_FEM_MIX)
 				return MT7992_EEPROM_DEFAULT_MIX;
-			}
-			dev_warn(dev->mt76.dev, "eeprom 0x7992 MT7992_EEPROM_DEFAULT\n");
 			return MT7992_EEPROM_DEFAULT;
 		}
 	case 0x7990:
 	default:
 		switch (dev->var.type) {
 		case MT7996_VAR_TYPE_233:
-			if (dev->var.fem == MT7996_FEM_INT) {
-				dev_warn(dev->mt76.dev, "eeprom 0x7990 MT7996_EEPROM_DEFAULT_233_INT\n");
+			if (dev->var.fem == MT7996_FEM_INT)
 				return MT7996_EEPROM_DEFAULT_233_INT;
-			}
-			dev_warn(dev->mt76.dev, "eeprom 0x7990 MT7996_EEPROM_DEFAULT_233\n");
 			return MT7996_EEPROM_DEFAULT_233;
 		case MT7996_VAR_TYPE_444:
 		default:
-			if (dev->var.fem == MT7996_FEM_INT) {
-				dev_warn(dev->mt76.dev, "eeprom 0x7990 MT7996_EEPROM_DEFAULT_INT\n");
+			if (dev->var.fem == MT7996_FEM_INT)
 				return MT7996_EEPROM_DEFAULT_INT;
-			}
-			dev_warn(dev->mt76.dev, "eeprom 0x7990 MT7996_EEPROM_DEFAULT\n");
 			return MT7996_EEPROM_DEFAULT;
 		}
 	}
@@ -147,11 +132,9 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
 	const struct firmware *fw = NULL;
 	int ret;
 
-	dev_warn(dev->mt76.dev, "Start request_firmware\n");
 	ret = request_firmware(&fw, mt7996_eeprom_name(dev), dev->mt76.dev);
 	if (ret)
 		return ret;
-	dev_warn(dev->mt76.dev, "End request_firmware\n");
 
 	if (!fw || !fw->data) {
 		dev_err(dev->mt76.dev, "Invalid default bin\n");
@@ -159,17 +142,14 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
 		goto out;
 	}
 
-	dev_warn(dev->mt76.dev, "Start mt7996_eeprom_variant_valid\n");
 	if (!use_default && mt7996_eeprom_variant_valid(dev, fw->data))
 		goto out;
-	dev_warn(dev->mt76.dev, "End mt7996_eeprom_variant_valid\n");
 
 	dev_warn(dev->mt76.dev, "eeprom load fail, use default bin\n");
 	memcpy(eeprom, fw->data, MT7996_EEPROM_SIZE);
 	dev->flash_mode = true;
 
 out:
-	dev_warn(dev->mt76.dev, "mt7996_eeprom_check_or_use_default out\n");
 	release_firmware(fw);
 
 	return ret;
@@ -180,37 +160,29 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 	bool use_default = false;
 	int ret;
 
-	dev_warn(dev->mt76.dev, "Start mt76_eeprom_init\n");
 	ret = mt76_eeprom_init(&dev->mt76, MT7996_EEPROM_SIZE);
 	if (ret < 0)
 		return ret;
-	dev_warn(dev->mt76.dev, "End mt76_eeprom_init\n");
 
-	dev_warn(dev->mt76.dev, "Start mt7996_check_eeprom\n");
 	if (ret && !mt7996_check_eeprom(dev)) {
 		dev->flash_mode = true;
 		goto out;
 	}
-	dev_warn(dev->mt76.dev, "End mt7996_check_eeprom\n");
 
 	if (!dev->flash_mode) {
-		dev_warn(dev->mt76.dev, "Start no flash_mode\n");
 		u32 eeprom_blk_size = MT7996_EEPROM_BLOCK_SIZE;
 		u32 block_num = DIV_ROUND_UP(MT7996_EEPROM_SIZE, eeprom_blk_size);
 		u8 free_block_num;
 		int i;
 
-		dev_warn(dev->mt76.dev, "Start mt7996_mcu_get_eeprom_free_block\n");
 		memset(dev->mt76.eeprom.data, 0, MT7996_EEPROM_SIZE);
 		ret = mt7996_mcu_get_eeprom_free_block(dev, &free_block_num);
 		if (ret < 0)
 			return ret;
-		dev_warn(dev->mt76.dev, "End mt7996_mcu_get_eeprom_free_block\n");
 
 		/* efuse info isn't enough */
 		if (free_block_num >= 59) {
 			use_default = true;
-			dev_warn(dev->mt76.dev, "efuse info isn't enough, use_default: %d\n", use_default);
 			goto out;
 		}
 
@@ -218,7 +190,6 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 		if (mt7996_mcu_get_eeprom(dev, 0, NULL, 0) ||
 		    mt7996_check_eeprom(dev)) {
 			use_default = true;
-			dev_warn(dev->mt76.dev, "check if eeprom data from fw is valid, use_default: %d\n", use_default);
 			goto out;
 		}
 
@@ -232,7 +203,6 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 						    NULL, len);
 			if (ret && ret != -EINVAL) {
 				use_default = true;
-				dev_warn(dev->mt76.dev, "read eeprom data from fw, use_default: %d\n", use_default);
 				goto out;
 			}
 		}
@@ -241,13 +211,11 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 		u8 *eeprom = dev->mt76.eeprom.data;
 		if (!eeprom[MT_EE_TX0_POWER_2G] || !eeprom[MT_EE_TX0_POWER_5G] || !eeprom[MT_EE_TX0_POWER_6G] ) {
 			use_default = true;
-			dev_warn(dev->mt76.dev, "invalid tx_power, use_default: %d\n", use_default);
 			goto out;
 		}
 	}
 
 out:
-	dev_warn(dev->mt76.dev, "mt7996_eeprom_load out, use_default: %d\n", use_default);
 	return mt7996_eeprom_check_or_use_default(dev, use_default);
 }
 
@@ -385,11 +353,6 @@ int mt7996_eeprom_get_target_power(struct mt7996_dev *dev,
 				      mt7996_get_channel_group_6g(chan->hw_value)];
 	else
 		target_power = eeprom[MT_EE_TX0_POWER_2G];
-
-	// if (target_power == 0) {
-	// 	target_power = 35;
-	// 	dev_warn(dev->mt76.dev, "mt7996_eeprom_get_target_power target_power is zero, set to %i\n",target_power);
-	// }
 
 	return target_power;
 }
