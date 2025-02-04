@@ -236,6 +236,14 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 				goto out;
 			}
 		}
+
+		/* read tx_power values from fw */
+		u8 *eeprom = dev->mt76.eeprom.data;
+		if (!eeprom[MT_EE_TX0_POWER_2G] || !eeprom[MT_EE_TX0_POWER_5G] || !eeprom[MT_EE_TX0_POWER_6G ) {
+			use_default = true;
+			dev_warn(dev->mt76.dev, "invalid tx_power, use_default: %d\n", use_default);
+			goto out;
+		}
 	}
 
 out:
@@ -378,10 +386,10 @@ int mt7996_eeprom_get_target_power(struct mt7996_dev *dev,
 	else
 		target_power = eeprom[MT_EE_TX0_POWER_2G];
 
-	if (target_power == 0) {
-		target_power = 35;
-		dev_warn(dev->mt76.dev, "mt7996_eeprom_get_target_power target_power is zero, set to %i\n",target_power);
-	}
+	// if (target_power == 0) {
+	// 	target_power = 35;
+	// 	dev_warn(dev->mt76.dev, "mt7996_eeprom_get_target_power target_power is zero, set to %i\n",target_power);
+	// }
 
 	return target_power;
 }
