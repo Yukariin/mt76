@@ -221,6 +221,7 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 	}
 
 out:
+	dev_warn(dev->mt76.dev, "mt7996_eeprom_load out\n");
 	return mt7996_eeprom_check_or_use_default(dev, use_default);
 }
 
