@@ -132,9 +132,11 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
 	const struct firmware *fw = NULL;
 	int ret;
 
+	dev_warn(dev->mt76.dev, "Start request_firmware\n");
 	ret = request_firmware(&fw, mt7996_eeprom_name(dev), dev->mt76.dev);
 	if (ret)
 		return ret;
+	dev_warn(dev->mt76.dev, "End request_firmware\n");
 
 	if (!fw || !fw->data) {
 		dev_err(dev->mt76.dev, "Invalid default bin\n");
@@ -142,14 +144,17 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
 		goto out;
 	}
 
+	dev_warn(dev->mt76.dev, "Start mt7996_eeprom_variant_valid\n");
 	if (!use_default && mt7996_eeprom_variant_valid(dev, fw->data))
 		goto out;
+	dev_warn(dev->mt76.dev, "End mt7996_eeprom_variant_valid\n");
 
 	dev_warn(dev->mt76.dev, "eeprom load fail, use default bin\n");
 	memcpy(eeprom, fw->data, MT7996_EEPROM_SIZE);
 	dev->flash_mode = true;
 
 out:
+	dev_warn(dev->mt76.dev, "mt7996_eeprom_check_or_use_default out\n");
 	release_firmware(fw);
 
 	return ret;
@@ -160,25 +165,32 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
 	bool use_default = false;
 	int ret;
 
+	dev_warn(dev->mt76.dev, "Start mt76_eeprom_init\n");
 	ret = mt76_eeprom_init(&dev->mt76, MT7996_EEPROM_SIZE);
 	if (ret < 0)
 		return ret;
+	dev_warn(dev->mt76.dev, "End mt76_eeprom_init\n");
 
+	dev_warn(dev->mt76.dev, "Start mt7996_check_eeprom\n");
 	if (ret && !mt7996_check_eeprom(dev)) {
 		dev->flash_mode = true;
 		goto out;
 	}
+	dev_warn(dev->mt76.dev, "End mt7996_check_eeprom\n");
 
 	if (!dev->flash_mode) {
+		dev_warn(dev->mt76.dev, "Start no flash_mode\n");
 		u32 eeprom_blk_size = MT7996_EEPROM_BLOCK_SIZE;
 		u32 block_num = DIV_ROUND_UP(MT7996_EEPROM_SIZE, eeprom_blk_size);
 		u8 free_block_num;
 		int i;
 
+		dev_warn(dev->mt76.dev, "Start mt7996_mcu_get_eeprom_free_block\n");
 		memset(dev->mt76.eeprom.data, 0, MT7996_EEPROM_SIZE);
 		ret = mt7996_mcu_get_eeprom_free_block(dev, &free_block_num);
 		if (ret < 0)
 			return ret;
+		dev_warn(dev->mt76.dev, "End mt7996_mcu_get_eeprom_free_block\n");
 
 		/* efuse info isn't enough */
 		if (free_block_num >= 59) {
